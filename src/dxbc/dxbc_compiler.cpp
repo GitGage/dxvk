@@ -210,7 +210,7 @@ namespace dxvk {
       std::move(m_immConstData));
   }
   
-  
+    
   void DxbcCompiler::emitDcl(const DxbcShaderInstruction& ins) {
     switch (ins.op) {
       case DxbcOpcode::DclGlobalFlags:

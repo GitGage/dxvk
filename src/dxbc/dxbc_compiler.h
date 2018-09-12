@@ -122,6 +122,18 @@ namespace dxvk {
     uint32_t labelElse = 0;
     uint32_t labelEnd  = 0;
   };
+
+
+  /**
+   * \brief Shader input/output array
+   *
+   * Stores a temporary array of vectors that is used
+   * to support dynamically indexed input/output arrays.
+   */
+  struct DxbcIndexedArray {
+    DxbcArrayType type;
+    uint32_t      varId = 0;
+  };
   
   
   /**
@@ -417,6 +429,11 @@ namespace dxvk {
       DxbcRegisterPointer,
       DxbcMaxInterfaceRegs>     m_oRegs;
     std::vector<DxbcSvMapping>  m_oMappings;
+
+    /////////////////////////////////////////////////////
+    // Dynamically indexed arrays of v# and o# registers
+    std::array<DxbcIndexedArray, DxbcMaxInterfaceRegs> m_vArrays;
+    std::array<DxbcIndexedArray, DxbcMaxInterfaceRegs> m_oArrays;
     
     //////////////////////////////////////////////////////
     // Shader resource variables. These provide access to
