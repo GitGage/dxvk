@@ -525,6 +525,9 @@ namespace dxvk {
     void emitDclGlobalFlags(
       const DxbcShaderInstruction&  ins);
     
+    void emitDclIndexRange(
+      const DxbcShaderInstruction&  ins);
+    
     void emitDclTemps(
       const DxbcShaderInstruction&  ins);
     

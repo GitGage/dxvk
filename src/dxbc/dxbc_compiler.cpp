@@ -217,7 +217,7 @@ namespace dxvk {
         return this->emitDclGlobalFlags(ins);
         
       case DxbcOpcode::DclIndexRange:
-        return;  // not needed for anything
+        return this->emitDclIndexRange(ins);
         
       case DxbcOpcode::DclTemps:
         return this->emitDclTemps(ins);
@@ -308,6 +308,56 @@ namespace dxvk {
   }
   
   
+  void DxbcCompiler::emitDclIndexRange(const DxbcShaderInstruction& ins) {
+    // TODO support hs/ds
+    DxbcIndexedArray array;
+    array.type.ctype   = DxbcScalarType::Float32;
+    array.type.ccount  = 0;
+    array.type.alength = ins.imm[0].u32;
+
+    // Outer array dimension and base register index
+    uint32_t vtxCount = ins.dst[0].idxDim > 1 ? ins.dst[0].idx[0].offset : 0;
+    uint32_t regIndex = ins.dst[0].idx[ins.dst[0].idxDim - 1].offset;
+
+    // Figure out how many vector components we need
+    for (uint32_t i = 0; i < 4; i++) {
+      if (ins.dst[0].mask[i])
+        array.type.ccount = i + 1;
+    }
+
+    // Define the array type
+    uint32_t arrTypeId = getArrayTypeId(array.type);
+
+    if (vtxCount > 0) {
+      arrTypeId = m_module.defArrayType(
+        arrTypeId, m_module.consti32(vtxCount));
+    }
+
+    // Define the variable pointer type
+    uint32_t ptrTypeId = m_module.defPointerType(
+      arrTypeId, spv::StorageClassPrivate);
+    
+    // Define private variable for the array
+    array.varId = m_module.newVar(
+      ptrTypeId, spv::StorageClassPrivate);
+    
+    switch (ins.dst[0].type) {
+      case DxbcOperandType::Input:
+        m_module.setDebugName(array.varId, str::format("tmp_v", regIndex).c_str());
+        m_vArrays[regIndex] = array;
+        break;
+
+      case DxbcOperandType::Output:
+        m_module.setDebugName(array.varId, str::format("tmp_o", regIndex).c_str());
+        m_oArrays[regIndex] = array;
+        break;
+
+      default:
+        throw DxvkError("DXBC: dcl_index_range not supported for this operand type");
+    }
+  }
+
+
   void DxbcCompiler::emitDclTemps(const DxbcShaderInstruction& ins) {
     // dcl_temps has one operand:
     //    (imm0) Number of temp registers
